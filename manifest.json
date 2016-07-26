@@ -1,0 +1,29 @@
+{
+"manifest_version": 2,
+    "name": "Reddit Saved Links Manager",
+    "description": "Exactly what it says",
+    "version": "0.1",
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.reddit.com/user/*/saved*"
+            ],
+            "js": [
+                "jquery-1.12.0.min.js", "content.js"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "browser_action": {
+        "default_icon": "icon.png",
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "scripts": ["jquery-1.12.0.min.js", "background.js"]
+    },
+    "permissions": [
+        "tabs",
+        "storage",
+        "<all_urls>"
+    ]
+}
