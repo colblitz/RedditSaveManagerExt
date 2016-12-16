@@ -1,15 +1,85 @@
-var username = "";
-var password = "";
+var config = require('./configure');
+var r;
+var s;
 
 function setUser(u, p) {
-  username = u;
-  password = p;
-  console.log(username + " " + password);
+  r = new window.snoowrap({
+	  user_agent: config.reddit.user_agent,
+	  client_id: config.reddit.client_id,
+	  client_secret: config.reddit.client_secret,
+	  username: u,
+	  password: p
+	});
+
+  console.log(r.username);
+}
+
+function setSource(u, p) {
+  s = new window.snoowrap({
+    user_agent: config.reddit.user_agent,
+	  client_id: config.reddit.client_id,
+	  client_secret: config.reddit.client_secret,
+    username: u,
+    password: p
+  });
+
+  console.log(s.username);
+}
+
+function logout() {
+  r = null;
+}
+
+function logoutSource() {
+  s = null;
+}
+
+function transferSavedTo(id) {
+  if (r != null && s != null) {
+    console.log("transferring " + id + " from " + s.username + " to " + r.username);
+    r.get_submission(id).save();
+    s.get_submission(id).unsave();
+    return true;
+  }
+  return false;
+}
+
+function unsave(a, id) {
+  console.log("unsaving " + id);
+  a.get_submission(id).unsave();
+}
+
+function download() {
+  r = new window.snoowrap({
+    user_agent: config.reddit.user_agent,
+	  client_id: config.reddit.client_id,
+	  client_secret: config.reddit.client_secret,
+    username: config.raccount1.username,
+    password: config.raccount1.password
+  });
+
+  chrome.tabs.getSelected(null, function(tab) {
+    chrome.tabs.sendMessage(tab.id, {
+      type: "download"
+    }, function(response) {
+      console.log("downloaded: " + response.downloaded.length);
+      for (var i = 0; i < response.downloaded.length; i++) {
+        var id = response.downloaded[i];
+        unsave(r, id);
+      }
+    });
+  });
 }
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    console.log(request);
+    if (request.type == "unsave") {
+      if (transferSavedTo(request.id)) {
+        sendResponse({type: "unsave", id: request.id, success: true});
+      } else {
+        sendResponse({type: "unsave", id: request.id, success: false});
+      }
+    }
   }
 );
 
