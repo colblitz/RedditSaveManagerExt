@@ -4,9 +4,87 @@ function idFromLink(link) {
   return link.attr('id').split("_")[2];
 }
 
+function setTextOf(id, text) {
+  var divID = "#newDiv" + id;
+  $(divID).text(text);
+}
+
+var clicked = function(id) {
+  console.log(id);
+
+  chrome.runtime.sendMessage({type: "unsave", id: id}, function(response) {
+    console.log("response: ", response);
+    if (response.success) {
+      setTextOf(id, "Transferred");
+    } else {
+      setTextOf(id, "Error, need to login");
+    }
+  });
+
+  // chrome.runtime.sendMessage({type: "unsave", id: id}, function(response) {
+  //   // console.log("message sent");
+  //   console.log("got: " + response);
+  //   if (response.success) {
+  //     console.log("transferred: " + response.id);
+  //     // console.log("unsaved: " + response.id); 
+  //     // // console.log(unsaveButtons[response.id]);
+  //     // // unsaveButtons[response.id].click();
+
+  //     // var u = $($('.thing.saved.link[id$=' + response.id + ']')[0]).find('.link-unsave-button').find('a')[0];
+  //     // console.log(u);
+  //     // console.log($(u));
+  //     // $(u).click();
+  //   } else {
+  //     console.log("login");
+  //   }
+  // });
+  // return "clicked";
+}
+
 // var unsaveButtons = {};
 var reload = function() {
   $('.thing.saved.link').each(function() {
+    var link = $(this);
+    var id = idFromLink(link);
+    
+    var normalCSS = {
+      width: "100px",
+      height: "70px",
+      float: "left",
+    };
+
+    var $e = $("<div>", {
+      class: "aClass",
+      id: "newDiv" + id, 
+      text: "Transfer",
+    }).css(normalCSS)
+      .data("id", id)
+      .click(function() { clicked($(this).data('id')) });
+
+    
+    // $e.css(normalCSS);
+    // var hoverCSS = $.extend({}, normalCSS);
+    // hoverCSS["background-color"] = "#bea7a7";
+
+    // $e.css(normalCSS).mouseenter(function() {
+    //   $(this).css(hoverCSS);
+    // }).mouseleave(function() {
+    //   $(this).css(normalCSS);
+    // });
+
+    // $e.data("id", id);
+
+    // $e.click(function() { 
+    //   $(this).text(clicked($(this).attr('id')));
+    // });
+
+    // var thing = $(this).find('.entry')[0];
+    if ($(this).find('.aClass').length == 0) {
+      $e.insertAfter($(this).find('.thumbnail'));
+    }
+  });
+}
+
     // var link = $(this);
     // var id = idFromLink(link);
     //var comments = link.find('.bylink.comments')[0];
@@ -24,22 +102,22 @@ var reload = function() {
 
 
     // add click to link
-    $(this).click( function(e) {
-      if (!$(e.target).is("a")) {
-        var link = $(this);
-        var id = idFromLink(link);
-        var url = $(link.find('a.title')[0]).attr('href');
+    // $(this).click( function(e) {
+    //   if (!$(e.target).is("a")) {
+    //     var link = $(this);
+    //     var id = idFromLink(link);
+    //     var url = $(link.find('a.title')[0]).attr('href');
         
-        if (url.includes("imgur")) {
-          if (url.includes("/a/")) {
-            console.log(url);
-            var thing = url.split("/").slice(-1)[0] + ".zip";
-            url = url + "/zip";
-            actuallyDownload(url, thing);
-            ids.push(id);
-          }
-        }
-      }
+    //     if (url.includes("imgur")) {
+    //       if (url.includes("/a/")) {
+    //         console.log(url);
+    //         var thing = url.split("/").slice(-1)[0] + ".zip";
+    //         url = url + "/zip";
+    //         actuallyDownload(url, thing);
+    //         ids.push(id);
+    //       }
+    //     }
+    //   }
 
       // clicked(idFromLink($(this)));
       // var link = $(this);
@@ -96,15 +174,15 @@ var reload = function() {
       //   return;
       // }
       
-    });
+    // });
 
     // stop propagation for unsave
     // unsave.click( function(e) {
     //   e.stopPropagation();
     // });
 
-  });
-};
+  // });
+// };
 reload();
 
 var actuallyDownload = function(url, name) {
@@ -161,26 +239,6 @@ var download = function() {
     }
   });
   return ids;
-}
-
-var clicked = function(id) {
-  chrome.runtime.sendMessage({type: "unsave", id: id}, function(response) {
-    // console.log("message sent");
-    console.log("got: " + response);
-    if (response.success) {
-      console.log("transferred: " + response.id);
-      // console.log("unsaved: " + response.id); 
-      // // console.log(unsaveButtons[response.id]);
-      // // unsaveButtons[response.id].click();
-
-      // var u = $($('.thing.saved.link[id$=' + response.id + ']')[0]).find('.link-unsave-button').find('a')[0];
-      // console.log(u);
-      // console.log($(u));
-      // $(u).click();
-    } else {
-      console.log("login");
-    }
-  });
 }
 
 var pages = 0;

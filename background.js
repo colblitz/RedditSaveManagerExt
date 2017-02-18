@@ -1,6 +1,7 @@
-var config = require('./configure');
 var r;
 var s;
+
+console.log("config: ", config);
 
 function setUser(u, p) {
   r = new window.snoowrap({
