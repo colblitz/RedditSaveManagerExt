@@ -99,7 +99,7 @@ def tryProcessLink(link):
 		unsave(link)
 	def skipped():
 		logP("skipped")
-		skippedUrls.append(linkUrl)
+		skippedUrls.append(link.id + " " + linkUrl)
 	def album():
 		albumTransferred += 1
 		logP("transfer")
@@ -171,7 +171,7 @@ print ""
 print "------------------------------------------------------------------------"
 print "Skipped", len(skippedUrls)
 print ""
-for link in sorted(skippedUrls):
+for link in sorted(skippedUrls, key=lambda s: str(s)[7:]):
 	print link
 
 print "------------------------------------------------------------------------"
