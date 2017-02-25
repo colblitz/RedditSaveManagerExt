@@ -104,9 +104,6 @@ errorMessages = []
 successSaved = 0
 albumTransferred = 0
 
-
-
-
 def tryProcessLink(link):
 	linkId = link.id
 	linkUrl = ""
@@ -128,10 +125,6 @@ def tryProcessLink(link):
 	def skipped():
 		logP("skipped")
 		skippedUrls.append(link.id + " " + linkUrl)
-	def album():
-		albumTransferred += 1
-		logP("transfer")
-		transfer(link)
 	def error(e):
 		logP("## error: " + str(e))
 		errorMessages.append(link.id + " " + link.url + ": " + str(e))
@@ -147,10 +140,12 @@ def tryProcessLink(link):
 			return success()
 
 		elif "imgur.com" in linkUrl and "/a/" in linkUrl:
-			return album()
+			processImgurAlbum(linkUrl)
+			return success()
 
 		elif "imgur.com" in linkUrl and "/gallery/" in linkUrl:
-			return album()
+			processImgurAlbum(linkUrl)
+			return success()
 
 		elif "imgur.com" in linkUrl and "." not in getFilename(linkUrl):
 			actuallyDownload(linkUrl.replace("imgur.com", "i.imgur.com") + ".jpg")
@@ -181,51 +176,13 @@ def tryProcessLink(link):
 	except Exception, e:
 		return error(e)
 
-def tryProcessLink2(link):
-	linkId = link.id
-	linkUrl = ""
-	try:
-		linkUrl = link.url
-	except:
-		logP("skipped - not link")
-		skippedUrls.append(link)
-		return
-
-	log("")
-	log(linkId + " - " + linkUrl)
-
-	def album():
-		global successSaved
-		successSaved += 1
-		logP("is album")
-		unsave(link)
-	def skipped():
-		logP("skipped")
-		skippedUrls.append(link.id + " " + linkUrl)
-	def error(e):
-		logP("## error: " + str(e))
-		errorMessages.append(link.id + " " + link.url + ": " + str(e))
-
-	try:
-		if "imgur.com" in linkUrl and "/a/" in linkUrl:
-			processImgurAlbum(linkUrl)
-			return album()
-
-		elif "imgur.com" in linkUrl and "/gallery/" in linkUrl:
-			processImgurAlbum(linkUrl)
-			return album()
-
-		return skipped()
-	except Exception, e:
-		return error(e)
-
-saved = reddit2.user.me().saved(limit=500)
+saved = reddit.user.me().saved(limit=500)
 
 log("------------------------------------------------------------------------")
 log("---" + time.strftime("%c"))
 
 for link in saved:
-	tryProcessLink2(link)
+	tryProcessLink(link)
 
 print "------------------------------------------------------------------------"
 print "Errors", len(errorMessages)
