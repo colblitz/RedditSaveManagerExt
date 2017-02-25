@@ -15,6 +15,7 @@ REDDITUSERNAME     = Config.redditUsername
 REDDITPASSWORD     = Config.redditPassword
 REDDITUSERNAME2    = Config.redditUsername2
 REDDITPASSWORD2    = Config.redditPassword2
+IMGURCLIENTID      = Config.imgurClientId
 
 reddit = praw.Reddit(
 	user_agent=REDDITUSERAGENT,
@@ -56,6 +57,11 @@ def actuallyDownload(url, extension=None):
 	testfile = urllib.URLopener()
 	testfile.retrieve(url, "downloads/" + filename)
 
+def actuallyImgurAlbumDownload(url, albumId):
+	filename = getFilename(url)
+	testfile = urllib.URLopener()
+	testfile.retrieve(url, "downloads/albums/" + albumId + "-" + filename)
+
 def getGfycatUrl(linkUrl):
 	# https://gfycat.com/ForsakenThinDromedary
 	gfyId = linkUrl.split('/')[-1]
@@ -65,6 +71,23 @@ def getGfycatUrl(linkUrl):
 	mp4url = str(data['gfyItem']['mp4Url'])
 	logP("mp4url: " + mp4url)
 	return mp4url
+
+def getImgurAlbumLinks(albumId):
+	info = 'https://api.imgur.com/3/album/' + albumId + '/images'
+	resp = requests.get(url=info, headers={'Authorization': 'Client-ID ' + IMGURCLIENTID})
+	data = json.loads(resp.text)
+	links = []
+	for image in data['data']:
+		links.append(image['link'])
+	return links
+
+def processImgurAlbum(albumUrl):
+	albumId = getFilename(albumUrl)
+	links = getImgurAlbumLinks(albumId)
+	for imageUrl in links:
+		actuallyImgurAlbumDownload(imageUrl, albumId)
+		time.sleep(0.05)
+	logP("downloaded " + str(len(links)))
 
 def unsave(link):
 	logP("unsaving: " + link.id + " " + link.url)
@@ -80,6 +103,10 @@ skippedUrls = []
 errorMessages = []
 successSaved = 0
 albumTransferred = 0
+
+
+
+
 def tryProcessLink(link):
 	linkId = link.id
 	linkUrl = ""
@@ -94,6 +121,7 @@ def tryProcessLink(link):
 	log(linkId + " - " + linkUrl)
 
 	def success():
+		global successSaved
 		successSaved += 1
 		logP("success")
 		unsave(link)
@@ -153,13 +181,51 @@ def tryProcessLink(link):
 	except Exception, e:
 		return error(e)
 
-saved = reddit.user.me().saved(limit=500)
+def tryProcessLink2(link):
+	linkId = link.id
+	linkUrl = ""
+	try:
+		linkUrl = link.url
+	except:
+		logP("skipped - not link")
+		skippedUrls.append(link)
+		return
+
+	log("")
+	log(linkId + " - " + linkUrl)
+
+	def album():
+		global successSaved
+		successSaved += 1
+		logP("is album")
+		unsave(link)
+	def skipped():
+		logP("skipped")
+		skippedUrls.append(link.id + " " + linkUrl)
+	def error(e):
+		logP("## error: " + str(e))
+		errorMessages.append(link.id + " " + link.url + ": " + str(e))
+
+	try:
+		if "imgur.com" in linkUrl and "/a/" in linkUrl:
+			processImgurAlbum(linkUrl)
+			return album()
+
+		elif "imgur.com" in linkUrl and "/gallery/" in linkUrl:
+			processImgurAlbum(linkUrl)
+			return album()
+
+		return skipped()
+	except Exception, e:
+		return error(e)
+
+saved = reddit2.user.me().saved(limit=500)
 
 log("------------------------------------------------------------------------")
 log("---" + time.strftime("%c"))
 
 for link in saved:
-	tryProcessLink(link)
+	tryProcessLink2(link)
 
 print "------------------------------------------------------------------------"
 print "Errors", len(errorMessages)
