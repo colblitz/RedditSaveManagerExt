@@ -45,6 +45,16 @@ def logP(s):
 	log(s)
 
 
+downloadFolder = "downloads-" + time.strftime("%Y-%m-%d") + "/"
+downloadAlbumFolder = downloadFolder + "albums/"
+if not os.path.exists(downloadFolder):
+	log("Creating directory: " + downloadFolder)
+	os.makedirs(downloadFolder)
+
+if not os.path.exists(downloadAlbumFolder):
+	log("Creating directory: " + downloadAlbumFolder)
+	os.makedirs(downloadAlbumFolder)
+
 def getFilename(url):
 	return url.split('/')[-1].split('#')[0].split('?')[0]
 
@@ -55,12 +65,12 @@ def actuallyDownload(url, extension=None):
 		logP("downloading as: " + filename)
 
 	testfile = urllib.URLopener()
-	testfile.retrieve(url, "downloads/" + filename)
+	testfile.retrieve(url, downloadFolder + filename)
 
-def actuallyImgurAlbumDownload(url, albumId):
+def actuallyImgurAlbumDownload(url, i, albumId):
 	filename = getFilename(url)
 	testfile = urllib.URLopener()
-	testfile.retrieve(url, "downloads/albums/" + albumId + "-" + filename)
+	testfile.retrieve(url, downloadAlbumFolder + albumId + "-" +  ('%04d' % i) + "-" + filename)
 
 def getGfycatUrl(linkUrl):
 	# https://gfycat.com/ForsakenThinDromedary
@@ -84,8 +94,8 @@ def getImgurAlbumLinks(albumId):
 def processImgurAlbum(albumUrl):
 	albumId = getFilename(albumUrl)
 	links = getImgurAlbumLinks(albumId)
-	for imageUrl in links:
-		actuallyImgurAlbumDownload(imageUrl, albumId)
+	for i, imageUrl in enumerate(links):
+		actuallyImgurAlbumDownload(imageUrl, i, albumId)
 		time.sleep(0.05)
 	logP("downloaded " + str(len(links)))
 
