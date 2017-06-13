@@ -72,6 +72,13 @@ def actuallyImgurAlbumDownload(url, i, albumId):
 	testfile = urllib.URLopener()
 	testfile.retrieve(url, downloadAlbumFolder + albumId + "-" +  ('%04d' % i) + "-" + filename)
 
+def actuallyEroshareDownload(eItem, albumId):
+	position = eItem[0]
+	url = eItem[1]
+	filename = getFilename(url)
+	testfile = urllib.URLopener()
+	testfile.retrieve(url, downloadAlbumFolder + albumId + "-" +  ('%04d' % position) + "-" + filename)
+
 def getGfycatUrl(linkUrl):
 	# https://gfycat.com/ForsakenThinDromedary
 	gfyId = linkUrl.split('/')[-1]
@@ -96,6 +103,28 @@ def processImgurAlbum(albumUrl):
 	links = getImgurAlbumLinks(albumId)
 	for i, imageUrl in enumerate(links):
 		actuallyImgurAlbumDownload(imageUrl, i, albumId)
+		time.sleep(0.05)
+	logP("downloaded " + str(len(links)))
+
+
+def getEroshareAlbumLinks(albumId):
+	info = 'https://api.eroshare.com/api/v1/albums/' + albumId
+	resp = requests.get(url = info)
+	data = json.loads(resp.text)
+	links = []
+	for item in data['items']:
+		if item['type'] == 'Video':
+			links.append((item['position'], item['url_mp4']))
+		else:
+			links.append((item['position'], 'https:' + item['url_full']))
+	print links
+	return links
+
+def processEroshareAlbum(albumUrl):
+	albumId = getFilename(albumUrl)
+	links = getEroshareAlbumLinks(albumId)
+	for eItem in links:
+		actuallyEroshareDownload(eItem, albumId)
 		time.sleep(0.05)
 	logP("downloaded " + str(len(links)))
 
@@ -164,6 +193,10 @@ def tryProcessLink(link):
 		elif "gfycat" in linkUrl:
 			actuallyDownload(getGfycatUrl(linkUrl))
 			return success()
+
+		elif "eroshare" in linkUrl:
+			processEroshareAlbum(linkUrl)
+			# return success()
 
 		# https://i.reddituploads.com/1656217e668841e5b8cc202677de3b41?fit=max&h=1536&w=1536&s=da7a74bcf57c81979e6cbf2e9e4b25bf
 		elif "i.reddituploads.com" in linkUrl:
