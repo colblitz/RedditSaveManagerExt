@@ -5,21 +5,23 @@ console.log("config: ", config);
 
 function setUser(u, p) {
   r = new window.snoowrap({
-	  user_agent: config.reddit.user_agent,
-	  client_id: config.reddit.client_id,
-	  client_secret: config.reddit.client_secret,
-	  username: u,
-	  password: p
-	});
+    userAgent: config.reddit.user_agent,
+    clientId: config.reddit.client_id,
+    clientSecret: config.reddit.client_secret,
+    refreshToken: config.reddit.refresh_token,
+    username: u,
+    password: p
+  });
 
   console.log("r:" + r.username);
 }
 
 function setSource(u, p) {
   s = new window.snoowrap({
-    user_agent: config.reddit.user_agent,
-	  client_id: config.reddit.client_id,
-	  client_secret: config.reddit.client_secret,
+    userAgent: config.reddit.user_agent,
+    clientId: config.reddit.client_id,
+    clientSecret: config.reddit.client_secret,
+    refreshToken: config.reddit.refresh_token,
     username: u,
     password: p
   });
