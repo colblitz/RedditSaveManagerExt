@@ -196,7 +196,7 @@ def tryProcessLink(link):
 
 		elif "eroshare" in linkUrl:
 			processEroshareAlbum(linkUrl)
-			# return success()
+			return success()
 
 		# https://i.reddituploads.com/1656217e668841e5b8cc202677de3b41?fit=max&h=1536&w=1536&s=da7a74bcf57c81979e6cbf2e9e4b25bf
 		elif "i.reddituploads.com" in linkUrl:

@@ -12,7 +12,7 @@ function setUser(u, p) {
 	  password: p
 	});
 
-  console.log(r.username);
+  console.log("r:" + r.username);
 }
 
 function setSource(u, p) {
@@ -24,7 +24,7 @@ function setSource(u, p) {
     password: p
   });
 
-  console.log(s.username);
+  console.log("s:" + s.username);
 }
 
 function logout() {
@@ -40,6 +40,7 @@ function transferSavedTo(id) {
     console.log("transferring " + id + " from " + s.username + " to " + r.username);
     r.get_submission(id).save();
     s.get_submission(id).unsave();
+    console.log("done");
     return true;
   }
   return false;
