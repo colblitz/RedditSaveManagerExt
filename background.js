@@ -1,51 +1,42 @@
-var r;
 var s;
+var t;
 
 console.log("config: ", config);
 
-function setUser(u, p) {
-  r = new window.snoowrap({
-    userAgent: config.reddit.user_agent,
-    clientId: config.reddit.client_id,
-    clientSecret: config.reddit.client_secret,
-    refreshToken: config.reddit.refresh_token,
-    username: u,
-    password: p
-  });
-
-  console.log("r:" + r.username);
-}
-
-function setSource(u, p) {
+function setup() {
+  console.log("setting up source");
   s = new window.snoowrap({
-    userAgent: config.reddit.user_agent,
-    clientId: config.reddit.client_id,
-    clientSecret: config.reddit.client_secret,
-    refreshToken: config.reddit.refresh_token,
-    username: u,
-    password: p
+    userAgent: config.raccountS.user_agent,
+    clientId: config.raccountS.client_id,
+    clientSecret: config.raccountS.client_secret,
+    refreshToken: config.raccountS.refresh_token,
+    username: config.raccountS.username,
+    password: config.raccountS.password
   });
 
-  console.log("s:" + s.username);
-}
-
-function logout() {
-  r = null;
-}
-
-function logoutSource() {
-  s = null;
+  console.log("setting up target");
+  t = new window.snoowrap({
+    userAgent: config.raccountT.user_agent,
+    clientId: config.raccountT.client_id,
+    clientSecret: config.raccountT.client_secret,
+    refreshToken: config.raccountT.refresh_token,
+    username: config.raccountT.username,
+    password: config.raccountT.password
+  });
 }
 
 function transferSavedTo(id) {
-  if (r != null && s != null) {
-    console.log("transferring " + id + " from " + s.username + " to " + r.username);
-    r.getSubmission(id).save().then("saved to " + r.username);
-    s.getSubmission(id).unsave().then("unsaved from " + s.username);
-    console.log("done");
-    return true;
+  if (s == null || t == null) {
+    setup();
   }
-  return false;
+
+  console.log("transferring " + id);
+
+  t.getSubmission(id).save().then(console.log("saved"));
+  s.getSubmission(id).unsave().then(console.log("unsaved"));
+
+  console.log("done");
+  return true;
 }
 
 chrome.runtime.onMessage.addListener(
