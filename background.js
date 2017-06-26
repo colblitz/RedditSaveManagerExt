@@ -40,8 +40,8 @@ function logoutSource() {
 function transferSavedTo(id) {
   if (r != null && s != null) {
     console.log("transferring " + id + " from " + s.username + " to " + r.username);
-    r.get_submission(id).save();
-    s.get_submission(id).unsave();
+    r.getSubmission(id).save();
+    s.getSubmission(id).unsave();
     console.log("done");
     return true;
   }
