@@ -19,7 +19,7 @@
         "default_popup": "popup.html"
     },
     "background": {
-        "scripts": ["jquery-1.12.0.min.js", "configure.js", "background.js", "snoowrap.js"]
+        "scripts": ["jquery-1.12.0.min.js", "configure.js", "background.js", "snoowrap-v1.js"]
     },
     "permissions": [
         "tabs",
