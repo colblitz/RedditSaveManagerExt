@@ -1,3 +1,4 @@
+import argparse
 import praw
 import re
 import urllib
@@ -143,6 +144,63 @@ errorMessages = []
 successSaved = 0
 albumTransferred = 0
 
+SUCCESS = 1
+SKIPPED = 2
+
+# console.log(document.getElementsByTagName("source")[0].src);
+
+def processUrl(linkUrl):
+	try:
+		if "i.imgur.com" in linkUrl:
+			if ".png" in linkUrl:
+				actuallyDownload(linkUrl, ".jpg")
+			elif ".gifv" in linkUrl:
+				actuallyDownload(linkUrl.replace(".gifv", ".mp4"))
+			else:
+				actuallyDownload(linkUrl)
+			return SUCCESS
+
+		elif "imgur.com" in linkUrl and "/a/" in linkUrl:
+			processImgurAlbum(linkUrl)
+			return SUCCESS
+
+		elif "imgur.com" in linkUrl and "/gallery/" in linkUrl:
+			processImgurAlbum(linkUrl)
+			return SUCCESS
+
+		elif "imgur.com" in linkUrl and "." not in getFilename(linkUrl):
+			actuallyDownload(linkUrl.replace("imgur.com", "i.imgur.com") + ".jpg")
+			return SUCCESS
+
+		elif "gfycat" in linkUrl:
+			actuallyDownload(getGfycatUrl(linkUrl))
+			return SUCCESS
+
+		elif "eroshare" in linkUrl:
+			processEroshareAlbum(linkUrl)
+			return SUCCESS
+
+		# https://i.reddituploads.com/1656217e668841e5b8cc202677de3b41?fit=max&h=1536&w=1536&s=da7a74bcf57c81979e6cbf2e9e4b25bf
+		elif "i.reddituploads.com" in linkUrl:
+			actuallyDownload(linkUrl, ".jpg")
+			return SUCCESS
+
+		elif linkUrl.endswith(".jpg"):
+			actuallyDownload(linkUrl)
+			return SUCCESS
+
+		elif linkUrl.endswith(".png"):
+			actuallyDownload(linkUrl)
+			return SUCCESS
+
+		elif linkUrl.endswith(".gif"):
+			actuallyDownload(linkUrl)
+			return SUCCESS
+
+		return SKIPPED
+	except Exception, e:
+		return e
+
 def tryProcessLink(link):
 	linkId = link.id
 	linkUrl = ""
@@ -168,81 +226,51 @@ def tryProcessLink(link):
 		logP("## error: " + str(e))
 		errorMessages.append(link.id + " " + link.url + ": " + str(e))
 
-	try:
-		if "i.imgur.com" in linkUrl:
-			if ".png" in linkUrl:
-				actuallyDownload(linkUrl, ".jpg")
-			elif ".gifv" in linkUrl:
-				actuallyDownload(linkUrl.replace(".gifv", ".mp4"))
-			else:
-				actuallyDownload(linkUrl)
-			return success()
-
-		elif "imgur.com" in linkUrl and "/a/" in linkUrl:
-			processImgurAlbum(linkUrl)
-			return success()
-
-		elif "imgur.com" in linkUrl and "/gallery/" in linkUrl:
-			processImgurAlbum(linkUrl)
-			return success()
-
-		elif "imgur.com" in linkUrl and "." not in getFilename(linkUrl):
-			actuallyDownload(linkUrl.replace("imgur.com", "i.imgur.com") + ".jpg")
-			return success()
-
-		elif "gfycat" in linkUrl:
-			actuallyDownload(getGfycatUrl(linkUrl))
-			return success()
-
-		elif "eroshare" in linkUrl:
-			processEroshareAlbum(linkUrl)
-			return success()
-
-		# https://i.reddituploads.com/1656217e668841e5b8cc202677de3b41?fit=max&h=1536&w=1536&s=da7a74bcf57c81979e6cbf2e9e4b25bf
-		elif "i.reddituploads.com" in linkUrl:
-			actuallyDownload(linkUrl, ".jpg")
-			return success()
-
-		elif linkUrl.endswith(".jpg"):
-			actuallyDownload(linkUrl)
-			return success()
-
-		elif linkUrl.endswith(".png"):
-			actuallyDownload(linkUrl)
-			return success()
-
-		elif linkUrl.endswith(".gif"):
-			actuallyDownload(linkUrl)
-			return success()
-
+	result = processUrl(linkUrl)
+	if result == SUCCESS:
+		return success()
+	elif result == SKIPPED:
 		return skipped()
-	except Exception, e:
-		return error(e)
+	else:
+		return error(result)
 
-saved = reddit.user.me().saved(limit=500)
+parser=argparse.ArgumentParser()
+parser.add_argument('--file', help='File with urls')
 
-log("------------------------------------------------------------------------")
-log("---" + time.strftime("%c"))
+if __name__ == "__main__":
+	log("------------------------------------------------------------------------")
+	log("---" + time.strftime("%c"))
 
-for link in saved:
-	tryProcessLink(link)
+	args=parser.parse_args()
 
-print "------------------------------------------------------------------------"
-print "Errors", len(errorMessages)
-print ""
-for link in sorted(errorMessages):
-	print link
+	if args.file == None:
+		saved = reddit.user.me().saved(limit=500)
+		for link in saved:
+			print link
+			# tryProcessLink(link)
 
-print ""
-print "------------------------------------------------------------------------"
-print "Skipped", len(skippedUrls)
-print ""
-for link in sorted(skippedUrls, key=lambda s: str(s)[7:]):
-	print link
+		print "------------------------------------------------------------------------"
+		print "Errors", len(errorMessages)
+		print ""
+		for link in sorted(errorMessages):
+			print link
 
-print "------------------------------------------------------------------------"
-print "Success: ", successSaved
-print "Transferred: ", albumTransferred
+		print ""
+		print "------------------------------------------------------------------------"
+		print "Skipped", len(skippedUrls)
+		print ""
+		for link in sorted(skippedUrls, key=lambda s: str(s)[7:]):
+			print link
 
-logfile.close()
-print "done"
+		print "------------------------------------------------------------------------"
+		print "Success: ", successSaved
+		print "Transferred: ", albumTransferred
+
+		logfile.close()
+		print "done"
+
+	else:
+		urlfile = open(args.file, 'r')
+		for url in urlfile:
+			print url.strip()
+			print processUrl(url.strip())
