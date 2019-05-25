@@ -83,7 +83,8 @@ def actuallyEroshareDownload(eItem, albumId):
 def getGfycatUrl(linkUrl):
 	# https://gfycat.com/ForsakenThinDromedary
 	gfyId = linkUrl.split('/')[-1]
-	info = 'https://gfycat.com/cajax/get/' + gfyId
+	# info = 'https://gfycat.com/cajax/get/' + gfyId
+	info = 'https://api.gfycat.com/v1/gfycats/' + gfyId
 	resp = requests.get(url=info)
 	data = json.loads(resp.text)
 	mp4url = str(data['gfyItem']['mp4Url'])
@@ -246,8 +247,7 @@ if __name__ == "__main__":
 	if args.file == None:
 		saved = reddit.user.me().saved(limit=500)
 		for link in saved:
-			print link
-			# tryProcessLink(link)
+			tryProcessLink(link)
 
 		print "------------------------------------------------------------------------"
 		print "Errors", len(errorMessages)
