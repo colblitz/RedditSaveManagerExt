@@ -38,7 +38,10 @@ urllib.URLopener.version = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.
 logfile = open('output.log', 'a')
 
 def log(s):
-	logfile.write(s + "\n")
+	try:
+		logfile.write(s + "\n")
+	except:
+		print "#####################################################"
 	print s
 
 def logP(s):
@@ -87,6 +90,7 @@ def getGfycatUrl(linkUrl):
 	info = 'https://api.gfycat.com/v1/gfycats/' + gfyId
 	resp = requests.get(url=info)
 	data = json.loads(resp.text)
+	print data
 	mp4url = str(data['gfyItem']['mp4Url'])
 	logP("mp4url: " + mp4url)
 	return mp4url
@@ -134,6 +138,10 @@ def unsave(link):
 	logP("unsaving: " + link.id + " " + link.url)
 	link.unsave()
 
+def unsaveRemoved(link):
+	logP("unsaving removed: " + link.id)
+	link.unsave()
+
 def transfer(link):
 	logP("transferring: " + link.id + " " + link.url)
 	other = reddit2.submission(id=link.id)
@@ -174,6 +182,9 @@ def processUrl(linkUrl):
 			return SUCCESS
 
 		elif "gfycat" in linkUrl:
+			if linkUrl.endswith(".mp4"):
+				actuallyDownload(linkUrl)
+				return SUCCESS
 			actuallyDownload(getGfycatUrl(linkUrl))
 			return SUCCESS
 
@@ -198,45 +209,77 @@ def processUrl(linkUrl):
 			actuallyDownload(linkUrl)
 			return SUCCESS
 
+		elif linkUrl.endswith(".mp4"):
+			actuallyDownload(linkUrl)
+			return SUCCESS
+
 		return SKIPPED
 	except Exception, e:
 		return e
 
+# return (bool - success, string - skipped, exception - error)
 def tryProcessLink(link):
 	linkId = link.id
 	linkUrl = ""
-	try:
-		linkUrl = link.url
-	except:
-		logP("skipped - not link")
-		skippedUrls.append(link)
+
+	if type(link).__name__ == "Comment" and link.author is None:
+		unsaveRemoved(link)
 		return
 
 	log("")
-	log(linkId + " - " + linkUrl)
 
-	def success():
-		global successSaved
-		successSaved += 1
-		logP("success")
-		unsave(link)
-	def skipped():
-		logP("skipped")
-		skippedUrls.append(link.id + " " + linkUrl)
-	def error(e):
-		logP("## error: " + str(e))
-		errorMessages.append(link.id + " " + link.url + ": " + str(e))
+	try:
+		linkUrl = link.url
+	except:
+		log(linkId + " - not a link")
+		return False, link, None
+
+	log(linkId + " - " + linkUrl)
 
 	result = processUrl(linkUrl)
 	if result == SUCCESS:
-		return success()
+		logP("success")
+		unsave(link)
+		return True, None, None
 	elif result == SKIPPED:
-		return skipped()
+		logP("can't handle, skipped")
+		return False, link.id + " " + linkUrl, None
 	else:
-		return error(result)
+		logP("## error: " + str(result))
+		return False, None, link.id + " " + link.url + ": " + str(result)
+
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--file', help='File with urls')
+
+
+def tryProcessBatch():
+	linksSuccess = 0
+	linksSkipped = []
+	linksErrored = []
+
+	print "------------------------------------------------------------------------"
+	print "Starting batch"
+
+	saved = reddit.user.me().saved(limit=500)
+
+	print "Got batch of saved links"
+
+	linksTried = 0
+	for link in saved:
+		success, skipped, error = tryProcessLink(link)
+		linksTried += 1
+		if success:
+			linksSuccess += 1
+		else:
+			if skipped:
+				linksSkipped.append(skipped)
+			else:
+				linksErrored.append(error)
+
+	print "Done with batch, saved {} / {}".format(linksSuccess, linksTried)
+	return linksSuccess, linksSkipped, linksErrored
+
 
 if __name__ == "__main__":
 	log("------------------------------------------------------------------------")
@@ -245,29 +288,42 @@ if __name__ == "__main__":
 	args=parser.parse_args()
 
 	if args.file == None:
-		saved = reddit.user.me().saved(limit=500)
-		for link in saved:
-			tryProcessLink(link)
+		totalSaved = 0
 
-		print "------------------------------------------------------------------------"
-		print "Errors", len(errorMessages)
+		totalSkipped = set()
+		totalErrored = set()
+
+		while True:
+			linksSuccess, linksSkipped, linksErrored = tryProcessBatch()
+			totalSkipped.update(linksSkipped)
+			totalErrored.update(linksErrored)
+			if linksSuccess == 0:
+				print "None saved in batch, stopping"
+				break
+			totalSaved += linksSuccess
+
+		print "#######################################################################3"
 		print ""
-		for link in sorted(errorMessages):
+		print "Skipped", len(totalSkipped)
+		print ""
+		for link in sorted(list(totalSkipped), key=lambda s: str(s)[7:]):
 			print link
 
+		print "#######################################################################3"
 		print ""
-		print "------------------------------------------------------------------------"
-		print "Skipped", len(skippedUrls)
+		print "Errors", len(totalErrored)
 		print ""
-		for link in sorted(skippedUrls, key=lambda s: str(s)[7:]):
+		for link in sorted(list(totalErrored)):
 			print link
 
-		print "------------------------------------------------------------------------"
-		print "Success: ", successSaved
-		print "Transferred: ", albumTransferred
+		print "#######################################################################3"
+		print ""
+		print "Saved", len(totalSaved)
+		print ""
 
+		print "#######################################################################3"
+		print "Done"
 		logfile.close()
-		print "done"
 
 	else:
 		urlfile = open(args.file, 'r')
