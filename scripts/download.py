@@ -265,7 +265,7 @@ def tryProcessLink(link):
 
 	if type(link).__name__ == "Comment" and link.author is None:
 		unsaveRemoved(link)
-		return
+		return True, None, None
 
 	log("")
 
