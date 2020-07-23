@@ -217,6 +217,47 @@ def processUrl(linkUrl):
 	except Exception, e:
 		return e
 
+def processUrlDry(linkUrl):
+	try:
+		result = SKIPPED
+		if "i.imgur.com" in linkUrl:
+			result = SUCCESS
+
+		elif "imgur.com" in linkUrl and "/a/" in linkUrl:
+			result = SUCCESS
+
+		elif "imgur.com" in linkUrl and "/gallery/" in linkUrl:
+			result = SUCCESS
+
+		elif "imgur.com" in linkUrl and "." not in getFilename(linkUrl):
+			result = SUCCESS
+
+		elif "gfycat" in linkUrl:
+			result = SUCCESS
+
+		elif "eroshare" in linkUrl:
+			result = SUCCESS
+
+		# https://i.reddituploads.com/1656217e668841e5b8cc202677de3b41?fit=max&h=1536&w=1536&s=da7a74bcf57c81979e6cbf2e9e4b25bf
+		elif "i.reddituploads.com" in linkUrl:
+			result = SUCCESS
+
+		elif linkUrl.endswith(".jpg"):
+			result = SUCCESS
+
+		elif linkUrl.endswith(".png"):
+			result = SUCCESS
+
+		elif linkUrl.endswith(".gif"):
+			result = SUCCESS
+
+		elif linkUrl.endswith(".mp4"):
+			result = SUCCESS
+
+		return result
+	except Exception, e:
+		return e
+
 # return (bool - success, string - skipped, exception - error)
 def tryProcessLink(link):
 	linkId = link.id
@@ -328,5 +369,7 @@ if __name__ == "__main__":
 	else:
 		urlfile = open(args.file, 'r')
 		for url in urlfile:
-			print url.strip()
-			print processUrl(url.strip())
+			#print processUrl(url.strip())
+			result = processUrlDry(url.strip())
+			if result == SKIPPED:
+				print url
