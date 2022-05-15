@@ -137,7 +137,7 @@ class Downloader:
 			time.sleep(ALBUMSLEEP)
 		self.logMethod("Downloaded imgur album of size " + str(len(links)))
 
-	def processEroshareAlbum(albumUrl):
+	def processEroshareAlbum(self, albumUrl):
 		albumId = getFilename(albumUrl)
 		links = getEroshareAlbumLinks(albumId)
 		for eItem in links:
@@ -203,6 +203,18 @@ class Downloader:
 				self.actuallyDownload(linkUrl, extension = ".jpg")
 				result = True
 
+			# https://preview.redd.it/8r8nf3acdzv81.png?width=1074&format=png&auto=webp&s=5e2c7bbc7fa1bc3bb8431a341d4ac2f278ccc1c3
+			elif "preview.redd.it" in linkUrl:
+				if ".png" in linkUrl:
+					self.actuallyDownload(linkUrl, extension = ".jpg")
+				else:
+					self.actuallyDownload(linkUrl)
+				result = True
+
+			elif "reddit.com/gallery" in linkUrl:
+				self.processRedditGallery(linkUrl)
+				result = True
+
 			elif linkUrl[-4:] in [".jpg", ".png", ".gif", ".mp4"]:
 				self.actuallyDownload(linkUrl)
 				result = True
@@ -218,7 +230,6 @@ class Downloader:
 
 if __name__ == "__main__":
 	# testUrl = "https://redgifs.com/watch/viciousweakbonobo"
-	testUrl = "https://old.reddit.com/r/AsianHotties/comments/lobma8/do_you_like_tiny_asians_too/"
 	downloader = Downloader("test")
 	result, error = downloader.downloadUrl(testUrl)
 	print("Downloaded: ", result)

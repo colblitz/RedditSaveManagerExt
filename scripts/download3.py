@@ -66,6 +66,8 @@ def transfer(link):
 	other.save()
 	link.unsave()
 
+from pprint import pprint
+
 def tryProcessBatch(downloader):
 	numSuccess = 0
 	linksSkipped = []
@@ -85,11 +87,11 @@ def tryProcessBatch(downloader):
 			unsaveRemoved(link)
 			continue
 
-
 		if link.subreddit == "doujinshi":
 			log(linkId + " - skipping doujinshi")
 			linksSkipped.append(link.id + " - Skipping doujinshi")
 			continue
+
 
 		try:
 			linkUrl = link.url
@@ -98,11 +100,20 @@ def tryProcessBatch(downloader):
 			linksSkipped.append(link.id + " - Not a link")
 			continue
 
-		log("")
-		log(linkId + " - " + linkUrl)
-
 		linksTried += 1
-		downloaded, error = downloader.downloadUrl(linkUrl)
+		log("")
+		if link.is_gallery:
+			downloaded = False
+			error = ""
+			for m in link.media_metadata.values():
+				linkUrl = m['s']['u']
+				log(linkId + " - " + linkUrl)
+				downloaded_one, error_one = downloader.downloadUrl(linkUrl)
+				downloaded = downloaded and downloaded_one
+				error += error_one if error_one else ""
+		else:
+			log(linkId + " - " + linkUrl)
+			downloaded, error = downloader.downloadUrl(linkUrl)
 
 		if downloaded:
 			logP("Success")
@@ -115,7 +126,6 @@ def tryProcessBatch(downloader):
 			# skipped
 			logP("Can't handle, skipped")
 			linksSkipped.append(link.id + " " + link.url + " - Skipped")
-
 
 	print("Done with batch, saved {} / {}".format(numSuccess, linksTried))
 
