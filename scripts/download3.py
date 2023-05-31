@@ -102,15 +102,24 @@ def tryProcessBatch(downloader):
 
 		linksTried += 1
 		log("")
-		if link.is_gallery:
-			downloaded = False
+
+		if hasattr(link, "is_gallery") and link.is_gallery and hasattr(link, "media_metadata"):
+			if not link.media_metadata:
+				log(linkId + " " + linkUrl)
+				linksSkipped.append(link.id + " - gallery issue")
+				continue				
+			downloaded = True
 			error = ""
-			for m in link.media_metadata.values():
+			for i, m in enumerate(link.media_metadata.values()):
+				print(m['s'])
+				if 'u' not in m['s']:
+					continue
 				linkUrl = m['s']['u']
 				log(linkId + " - " + linkUrl)
-				downloaded_one, error_one = downloader.downloadUrl(linkUrl)
+				prefix = f"{linkId}-{i:02}"
+				downloaded_one, error_one = downloader.downloadUrl(linkUrl, prefix=prefix)
 				downloaded = downloaded and downloaded_one
-				error += error_one if error_one else ""
+				error += str(error_one) if error_one else ""
 		else:
 			log(linkId + " - " + linkUrl)
 			downloaded, error = downloader.downloadUrl(linkUrl)

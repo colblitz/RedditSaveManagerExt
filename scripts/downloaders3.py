@@ -21,8 +21,22 @@ ALBUMSLEEP = 0.05
 
 import os.path
 
+# open any redgif, search for api call with header
+# REDGIF_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy5yZWRnaWZzLmNvbS8iLCJpYXQiOjE2NzI0NzYxNDcsImV4cCI6MTY3MjU2MjU0Nywic3ViIjoiY2xpZW50LzE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsInNjb3BlcyI6InJlYWQiLCJ2YWxpZF9hZGRyIjoiNjkuMTE1LjEyNi4xMjgiLCJ2YWxpZF9hZ2VudCI6Ik1vemlsbGEvNS4wIChYMTE7IExpbnV4IHg4Nl82NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzk2LjAuNDY2NC40NSBTYWZhcmkvNTM3LjM2In0.o_exS8cVZ3kuByKYLrZwkag2LI4_3DvoEc4VVQX3wIkViRpLtIg1NAwx3imHnlujuk4v3cDXCVDhZYl7F8hRjHW-wHJ4g3qS_8rMbdv-o5ZBujEdN7L6DS0gLkaCcAifRuPGy4n6T6eTHLluQsYzSZuQgP5D-zKWHGFcu8oU0WFnEq8PXsLwQbKm5VFiydyRAiEQ7qRYhFnG4ERMU2YZf5gm1JtVOBZfnqNQSK3h7obPfxUZ3aaSIgDWx_iAcl65y1k52Xv0Ah8560cJX21_gKMkDUgcYkwRerxgqRBreZZJToZfZEfG50jJGNTU7AgoDYEm6yA1vZtA37Wh7WorOA"
+# REDGIF_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy5yZWRnaWZzLmNvbS8iLCJpYXQiOjE2NzI0NzYxNDcsImV4cCI6MTY3MjU2MjU0Nywic3ViIjoiY2xpZW50LzE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsInNjb3BlcyI6InJlYWQiLCJ2YWxpZF9hZGRyIjoiNjkuMTE1LjEyNi4xMjgiLCJ2YWxpZF9hZ2VudCI6Ik1vemlsbGEvNS4wIChYMTE7IExpbnV4IHg4Nl82NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzk2LjAuNDY2NC40NSBTYWZhcmkvNTM3LjM2In0.o_exS8cVZ3kuByKYLrZwkag2LI4_3DvoEc4VVQX3wIkViRpLtIg1NAwx3imHnlujuk4v3cDXCVDhZYl7F8hRjHW-wHJ4g3qS_8rMbdv-o5ZBujEdN7L6DS0gLkaCcAifRuPGy4n6T6eTHLluQsYzSZuQgP5D-zKWHGFcu8oU0WFnEq8PXsLwQbKm5VFiydyRAiEQ7qRYhFnG4ERMU2YZf5gm1JtVOBZfnqNQSK3h7obPfxUZ3aaSIgDWx_iAcl65y1k52Xv0Ah8560cJX21_gKMkDUgcYkwRerxgqRBreZZJToZfZEfG50jJGNTU7AgoDYEm6yA1vZtA37Wh7WorOA"
+REDGIF_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy5yZWRnaWZzLmNvbS8iLCJpYXQiOjE2NzgxNTAzMjIsImV4cCI6MTY3ODIzNjcyMiwic3ViIjoiY2xpZW50LzE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsInNjb3BlcyI6InJlYWQiLCJ2YWxpZF9hZGRyIjoiNjkuMTI0Ljk2LjE3NyIsInZhbGlkX2FnZW50IjoiTW96aWxsYS81LjAgKFgxMTsgTGludXggeDg2XzY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvOTYuMC40NjY0LjQ1IFNhZmFyaS81MzcuMzYiLCJyYXRlIjotMX0.PGKIeYkha6DXYBByG-02tTDwILZ2jn7WP9Qa3z7_enl0UOuTptr6v1SW_VmtUj6POaApT3qWGV5QORse5XLMKqcTdfwpGuj76gBmsCXy_iSCUzetkm5Tyiv6i3xQzIE47SDcy1zVckirNDX0yrB4dI90HMnm5Weow24EhCA0tjUAIPi55CEQPwsTVF9riaETBiOmKm_OomzuuW3eWs-5oLDbcghjoRIysbQzG1ZFefht8lob7FMASnKq9fvtN1aMRF0ZE4QY6DMKVWaC7DcdUC4EmB_9O1jPFHO4GO3BerhEaY9N56p3XJXOpvEjAstkpJlkQoGy9XNm1gtBczVLFQ"
+
 
 def getRequest(url):
+	if "redgifs" in url:
+		return urllib.request.Request(
+			url, 
+			data=None, 
+			headers={
+				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
+				'Authorization': REDGIF_TOKEN
+			}
+		)	
 	return urllib.request.Request(
 		url, 
 		data=None, 
@@ -82,18 +96,40 @@ def getEroshareAlbumLinks(albumId):
 			links.append((item['position'], 'https:' + item['url_full']))
 	return links
 
-def getRedgifUrl(linkUrl):
-	soup = BeautifulSoup(urlRead(linkUrl), "html.parser")
-	attributes = {"type":"application/ld+json"}
-	content = soup.find("script",attrs=attributes)
 
-	if content:
-		return json.loads(content.contents[0])["video"]["contentUrl"]
-	return None
+def getRedgifUrl(linkUrl):
+	gif_id = linkUrl.split("/")[-1]
+	info = f"https://api.redgifs.com/v2/gifs/{gif_id}?views=yes&users=yes"
+	resp = requests.get(url = info, headers={'Authorization': REDGIF_TOKEN})
+	data = json.loads(resp.text)
+	# print(data)
+
+	url = data.get("gif", {}).get("urls", {}).get("hd", None)
+	print(url)
+	return url
+
+	# data['gif']['urls']['hd']
+
+	# return None
+	# soup = BeautifulSoup(urlRead(linkUrl), "html.parser")
+	# print(soup)
+	# attributes = {"type":"application/ld+json"}
+	# content = soup.find("script",attrs=attributes)
+
+	# if content:
+	# 	return json.loads(content.contents[0])["video"]["contentUrl"]
+	# return None
 
 def getGdnUrl(linkUrl):
 	soup = BeautifulSoup(urlRead(linkUrl), "html.parser")
 	return soup.find(id="mp4Source").get("src")
+
+
+
+
+import requests, traceback, json, io, os, urllib.request, sys
+
+API_URL_REDGIFS = 'https://api.redgifs.com/v2/gifs/'
 
 class Downloader:
 	def __init__(self, downloadFolder, dry = False, logMethod = NOOP):
@@ -113,8 +149,10 @@ class Downloader:
 
 		print("Downloader initialized")
 
-	def actuallyDownload(self, url, filename = None, extension = None, album = False):
+	def getFilepath(self, url, filename = None, extension = None, album = False, prefix = None):
 		filename = filename if filename else getFilename(url)
+		if prefix:
+			filename = prefix + "-" + filename
 		if extension:
 			filename = os.path.splitext(filename)[0] + extension
 			self.logMethod("Downloading as: " + filename)
@@ -123,10 +161,48 @@ class Downloader:
 		if album:
 			folder = os.path.join(folder, "albums")
 		filepath = os.path.join(folder, filename)
+		return filepath
 
+	def actuallyDownload(self, url, filename = None, extension = None, album = False, prefix = None):
+		filepath = self.getFilepath(url, filename = filename, extension = extension, album = album, prefix = prefix)
 		if not self.dry:
 			urlDownload(url, filepath)
 			# self.opener.retrieve(url, filepath)
+
+	def downloadRedgifUrl(self, redgifs_url):
+		self.logMethod(f"redgifs_url = {redgifs_url}")
+		redgifs_id = redgifs_url.split("/")[-1]
+		self.logMethod(f"redgifs_id = {redgifs_id}")
+
+		sess = requests.Session()
+
+		#Get RedGifs Video Meta
+		# request = requests.get(API_URL_REDGIFS + redgifs_id)
+		request = sess.get(API_URL_REDGIFS + redgifs_id, headers={'Authorization': REDGIF_TOKEN})
+		
+		if request is None:
+			raise Exception("No response from api")
+		else:
+			rawData = request.json()
+			# print(f"rawData = {rawData}")
+
+			#Get HD video url
+			hd_video_url = rawData['gif']['urls']['hd']
+			self.logMethod(f"hd_video_url = {hd_video_url}")
+
+
+			filepath = self.getFilepath(hd_video_url)
+			self.logMethod(f"saving as {filepath}")
+
+			with sess.get(hd_video_url, stream=True) as r:
+				with open(filepath, 'wb') as f:
+					for chunk in r.iter_content(chunk_size=8192): 
+						# If you have chunk encoded response uncomment 
+						# if and set chunk_size parameter to None.
+						# if chunk: 
+						f.write(chunk)
+
+			# return hd_video_url
 
 	def processImgurAlbum(self, albumUrl):
 		albumId = getFilename(albumUrl)
@@ -148,7 +224,7 @@ class Downloader:
 			time.sleep(ALBUMSLEEP)
 		self.logMethod("Downloaded eroshare album of size " + str(len(links)))
 
-	def downloadUrl(self, linkUrl):
+	def downloadUrl(self, linkUrl, prefix=None):
 		result, error = False, None
 		try:
 			if "i.imgur.com" in linkUrl:
@@ -189,10 +265,15 @@ class Downloader:
 				result = True
 
 			elif "redgifs" in linkUrl:
-				mp4Url = getRedgifUrl(linkUrl)
-				self.logMethod("mp4Url for redgif " + linkUrl + ": " + mp4Url)
-				self.actuallyDownload(mp4Url)
-				result = True
+				if not self.dry:
+					self.downloadRedgifUrl(linkUrl)
+					result = True
+				# print("trying to get url")
+				# mp4Url = getRedgifUrl(linkUrl)
+				# print("mp4Url for redgif " + linkUrl + ": " + mp4Url)
+				# self.logMethod("mp4Url for redgif " + linkUrl + ": " + mp4Url)
+				# self.actuallyDownload(mp4Url)
+				# result = True
 
 			elif "eroshare" in linkUrl:
 				self.processEroshareAlbum(linkUrl)
@@ -206,9 +287,9 @@ class Downloader:
 			# https://preview.redd.it/8r8nf3acdzv81.png?width=1074&format=png&auto=webp&s=5e2c7bbc7fa1bc3bb8431a341d4ac2f278ccc1c3
 			elif "preview.redd.it" in linkUrl:
 				if ".png" in linkUrl:
-					self.actuallyDownload(linkUrl, extension = ".jpg")
+					self.actuallyDownload(linkUrl, extension = ".jpg", prefix=prefix)
 				else:
-					self.actuallyDownload(linkUrl)
+					self.actuallyDownload(linkUrl, prefix=prefix)
 				result = True
 
 			elif "reddit.com/gallery" in linkUrl:
@@ -229,7 +310,10 @@ class Downloader:
 
 
 if __name__ == "__main__":
+	# testUrl = "https://redgifs.com/ifr/breakableidleduckling"
 	# testUrl = "https://redgifs.com/watch/viciousweakbonobo"
+	testUrl = "https://redgifs.com/watch/beautifulopulentsaiga"
+	# testUrl = "https://www.reddit.com/gallery/wj30e1"
 	downloader = Downloader("test")
 	result, error = downloader.downloadUrl(testUrl)
 	print("Downloaded: ", result)

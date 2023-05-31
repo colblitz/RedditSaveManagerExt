@@ -107,7 +107,7 @@ def getLastProcessed(user):
 			for line in f:
 				parts = line.split(",")
 				if user == parts[0]:
-					latest = max(latest, parts[1])
+					latest = max(latest, int(parts[1]))
 	return int(latest)
 
 def updateLastProcessed(user, latestSeen):
@@ -134,6 +134,7 @@ def downloadUser(user):
 	processed = set()
 	while latestSeen <= now:
 		print("Starting Batch ------------------------- ")
+		time.sleep(2)
 		url = buildSearch(baseSubmissions, user, 500, ['id', 'url', 'created_utc'], latestSeen)
 		print("         Url:", url)
 		data = json.loads(requests.get(url).text)['data']
