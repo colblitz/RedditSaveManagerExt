@@ -1,3 +1,7 @@
+from redvid import Downloader as RDownloader
+
+import ffmpeg
+import re
 import json
 import os
 import requests
@@ -6,6 +10,7 @@ import urllib
 from urllib.request import urlopen
 #import urllib2
 import shutil
+import moviepy.editor as mpe
 
 from bs4 import BeautifulSoup
 import traceback
@@ -24,8 +29,8 @@ import os.path
 # open any redgif, search for api call with header
 # REDGIF_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy5yZWRnaWZzLmNvbS8iLCJpYXQiOjE2NzI0NzYxNDcsImV4cCI6MTY3MjU2MjU0Nywic3ViIjoiY2xpZW50LzE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsInNjb3BlcyI6InJlYWQiLCJ2YWxpZF9hZGRyIjoiNjkuMTE1LjEyNi4xMjgiLCJ2YWxpZF9hZ2VudCI6Ik1vemlsbGEvNS4wIChYMTE7IExpbnV4IHg4Nl82NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzk2LjAuNDY2NC40NSBTYWZhcmkvNTM3LjM2In0.o_exS8cVZ3kuByKYLrZwkag2LI4_3DvoEc4VVQX3wIkViRpLtIg1NAwx3imHnlujuk4v3cDXCVDhZYl7F8hRjHW-wHJ4g3qS_8rMbdv-o5ZBujEdN7L6DS0gLkaCcAifRuPGy4n6T6eTHLluQsYzSZuQgP5D-zKWHGFcu8oU0WFnEq8PXsLwQbKm5VFiydyRAiEQ7qRYhFnG4ERMU2YZf5gm1JtVOBZfnqNQSK3h7obPfxUZ3aaSIgDWx_iAcl65y1k52Xv0Ah8560cJX21_gKMkDUgcYkwRerxgqRBreZZJToZfZEfG50jJGNTU7AgoDYEm6yA1vZtA37Wh7WorOA"
 # REDGIF_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy5yZWRnaWZzLmNvbS8iLCJpYXQiOjE2NzI0NzYxNDcsImV4cCI6MTY3MjU2MjU0Nywic3ViIjoiY2xpZW50LzE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsInNjb3BlcyI6InJlYWQiLCJ2YWxpZF9hZGRyIjoiNjkuMTE1LjEyNi4xMjgiLCJ2YWxpZF9hZ2VudCI6Ik1vemlsbGEvNS4wIChYMTE7IExpbnV4IHg4Nl82NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzk2LjAuNDY2NC40NSBTYWZhcmkvNTM3LjM2In0.o_exS8cVZ3kuByKYLrZwkag2LI4_3DvoEc4VVQX3wIkViRpLtIg1NAwx3imHnlujuk4v3cDXCVDhZYl7F8hRjHW-wHJ4g3qS_8rMbdv-o5ZBujEdN7L6DS0gLkaCcAifRuPGy4n6T6eTHLluQsYzSZuQgP5D-zKWHGFcu8oU0WFnEq8PXsLwQbKm5VFiydyRAiEQ7qRYhFnG4ERMU2YZf5gm1JtVOBZfnqNQSK3h7obPfxUZ3aaSIgDWx_iAcl65y1k52Xv0Ah8560cJX21_gKMkDUgcYkwRerxgqRBreZZJToZfZEfG50jJGNTU7AgoDYEm6yA1vZtA37Wh7WorOA"
-REDGIF_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy5yZWRnaWZzLmNvbS8iLCJpYXQiOjE2NzgxNTAzMjIsImV4cCI6MTY3ODIzNjcyMiwic3ViIjoiY2xpZW50LzE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsInNjb3BlcyI6InJlYWQiLCJ2YWxpZF9hZGRyIjoiNjkuMTI0Ljk2LjE3NyIsInZhbGlkX2FnZW50IjoiTW96aWxsYS81LjAgKFgxMTsgTGludXggeDg2XzY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvOTYuMC40NjY0LjQ1IFNhZmFyaS81MzcuMzYiLCJyYXRlIjotMX0.PGKIeYkha6DXYBByG-02tTDwILZ2jn7WP9Qa3z7_enl0UOuTptr6v1SW_VmtUj6POaApT3qWGV5QORse5XLMKqcTdfwpGuj76gBmsCXy_iSCUzetkm5Tyiv6i3xQzIE47SDcy1zVckirNDX0yrB4dI90HMnm5Weow24EhCA0tjUAIPi55CEQPwsTVF9riaETBiOmKm_OomzuuW3eWs-5oLDbcghjoRIysbQzG1ZFefht8lob7FMASnKq9fvtN1aMRF0ZE4QY6DMKVWaC7DcdUC4EmB_9O1jPFHO4GO3BerhEaY9N56p3XJXOpvEjAstkpJlkQoGy9XNm1gtBczVLFQ"
-
+# REDGIF_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy5yZWRnaWZzLmNvbS8iLCJpYXQiOjE2NzgxNTAzMjIsImV4cCI6MTY3ODIzNjcyMiwic3ViIjoiY2xpZW50LzE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsInNjb3BlcyI6InJlYWQiLCJ2YWxpZF9hZGRyIjoiNjkuMTI0Ljk2LjE3NyIsInZhbGlkX2FnZW50IjoiTW96aWxsYS81LjAgKFgxMTsgTGludXggeDg2XzY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvOTYuMC40NjY0LjQ1IFNhZmFyaS81MzcuMzYiLCJyYXRlIjotMX0.PGKIeYkha6DXYBByG-02tTDwILZ2jn7WP9Qa3z7_enl0UOuTptr6v1SW_VmtUj6POaApT3qWGV5QORse5XLMKqcTdfwpGuj76gBmsCXy_iSCUzetkm5Tyiv6i3xQzIE47SDcy1zVckirNDX0yrB4dI90HMnm5Weow24EhCA0tjUAIPi55CEQPwsTVF9riaETBiOmKm_OomzuuW3eWs-5oLDbcghjoRIysbQzG1ZFefht8lob7FMASnKq9fvtN1aMRF0ZE4QY6DMKVWaC7DcdUC4EmB_9O1jPFHO4GO3BerhEaY9N56p3XJXOpvEjAstkpJlkQoGy9XNm1gtBczVLFQ"
+REDGIF_TOKEN = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhdXRoLXNlcnZpY2UiLCJpYXQiOjE2OTI3NTUzOTMsImF6cCI6IjE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsImV4cCI6MTY5Mjg0MTc5Mywic3ViIjoiY2xpZW50LzE4MjNjMzFmN2QzLTc0NWEtNjU4OS0wMDA1LWQ4ZThmZTBhNDRjMiIsInNjb3BlcyI6InJlYWQiLCJ2YWxpZF9hZGRyIjoiNjkuMTI0Ljk3LjI1MCIsInZhbGlkX2FnZW50IjoiTW96aWxsYS81LjAgKFgxMTsgTGludXggeDg2XzY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTE1LjAuMC4wIFNhZmFyaS81MzcuMzYiLCJyYXRlIjotMSwiaHR0cHM6Ly9yZWRnaWZzLmNvbS9zZXNzaW9uLWlkIjoiU1FhQVVLblBhYVJUdVVhVXdVNFVDZCJ9.pM4_Q9DwYqxLhxT1pnf23Jl98i8VxRo5mBotjQ-Rv2dN-YddMysjseGAb7tY7ID_MfOZCDnFmLcpseIsCWCqF5MNwMO8Bx608SHJhvEZZRuuy_huRfuoTygW_UO2oPS_RGNyBQKVct6D0v725Xcpz7cVhOTXFkMSaMwXQtVxRVnHMINMEkPihQ5Gj65CmdKuCZ7tSyoQtcMmNNQafwYJI2Vtgw9Dxhx0yrzdxmL-foCLKMlbbZQ3xIvoDMpro9467bnCR8n3kH9KYkqXVf9lnR42D9nUrIaDyqBi-pD8wHFSumR4M_rnhqC_SDfJeSFIwvC6plL8zdCLzxx_zStspw"
 
 def getRequest(url):
 	if "redgifs" in url:
@@ -137,6 +142,7 @@ class Downloader:
 		#self.opener = urllib.URLopener()
 		self.dry = dry
 		self.logMethod = logMethod
+		self.redvidDownloader = RDownloader(max_q=True, path=self.base, log=False)
 
 		if not os.path.exists(self.base):
 			print("Creating directory: " + self.base)
@@ -224,6 +230,73 @@ class Downloader:
 			time.sleep(ALBUMSLEEP)
 		self.logMethod("Downloaded eroshare album of size " + str(len(links)))
 
+	def downloadVideoUrl(self, url):
+		print(url)
+		start = time.time()
+		# print("test")
+		
+		# return url.split('/')[-1].split('#')[0].split('?')[0]
+		if ".mp4" in url:
+			url = "/".join(url.split('/')[:-1])
+		print(f"setting url to {url}")
+		self.redvidDownloader.url = url
+
+		self.redvidDownloader.download()
+		end = time.time()
+		first = end - start
+		return True, None
+
+		# start = time.time()
+		# print(url)
+		# # video_file_name = f"{output_folder}/temp_video.mp4"
+		# filepath = self.getFilepath(url, filename = "test", extension = ".mp4")
+		# print(filepath)
+
+		# video_file_name = f"temp_video.mp4"
+		# with open(video_file_name, 'wb') as video_file:
+		# 	video_file.write(requests.get(url).content)
+
+		# audio_base_url = re.sub(r"(v.redd.it/\w+/)(\w+)(\.mp4)", r"\1DASH_\3", url)[:-4]
+		# audio_file_name = f"temp_audio.mp4"
+		
+		# endings = ["audio.mp4", "AUDIO_128.mp4", "AUDIO_64.mp4"]
+
+		# audio_response = None
+		# for e in endings:
+		# 	print(f"trying {audio_base_url + e}")
+		# 	audio_response = requests.get(audio_base_url + e)
+		# 	if audio_response.status_code == 403:
+		# 		continue
+		# 	else:
+		# 		print("got it")
+		# 		break
+
+		# with open(audio_file_name, 'wb') as audio_file:
+		# 	audio_file.write(audio_response.content)
+
+		# print(f"Saving: {filepath}")
+		# # audio = ffmpeg.input(audio_file_name, loglevel="quiet")
+		# # video = ffmpeg.input(video_file_name, loglevel="quiet")
+
+		# audio = ffmpeg.input(audio_file_name)
+		# video = ffmpeg.input(video_file_name)
+
+		# ffmpeg.output(audio, video, filepath).run(overwrite_output=True)
+
+		# # video_clip = mpe.VideoFileClip(video_file_name)
+		# # audio_clip = mpe.AudioFileClip(audio_file_name)
+		# # final_clip = video_clip.set_audio(audio_clip)
+		
+		# # final_clip.write_videofile(filepath, logger=None)
+
+		# os.remove(video_file_name)
+		# os.remove(audio_file_name)
+		# print("done")
+		# end = time.time()
+		# print(f"1 done in {first}")
+		# print(f"2 done in {end - start}")
+
+
 	def downloadUrl(self, linkUrl, prefix=None):
 		result, error = False, None
 		try:
@@ -300,6 +373,9 @@ class Downloader:
 				self.actuallyDownload(linkUrl)
 				result = True
 
+			elif "v.redd.it" in linkUrl:
+				return self.downloadVideoUrl(linkUrl)
+
 			else:
 				self.logMethod("Unhandled: " + linkUrl)
 		except Exception as e:
@@ -310,9 +386,11 @@ class Downloader:
 
 
 if __name__ == "__main__":
+	testUrl = "https://v.redd.it/s8qu0ei7gx9b1"
+
 	# testUrl = "https://redgifs.com/ifr/breakableidleduckling"
 	# testUrl = "https://redgifs.com/watch/viciousweakbonobo"
-	testUrl = "https://redgifs.com/watch/beautifulopulentsaiga"
+	# testUrl = "https://redgifs.com/watch/beautifulopulentsaiga"
 	# testUrl = "https://www.reddit.com/gallery/wj30e1"
 	downloader = Downloader("test")
 	result, error = downloader.downloadUrl(testUrl)

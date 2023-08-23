@@ -1,3 +1,4 @@
+import re
 import argparse
 import praw
 import time
@@ -68,6 +69,25 @@ def transfer(link):
 
 from pprint import pprint
 
+def get_video_url(submission):
+	if not submission.is_video:
+		return None
+
+	if not hasattr(submission, "media") or submission.media is None or 'reddit_video' not in submission.media or 'fallback_url' not in submission.media['reddit_video']:
+		return None
+
+	groups = re.search(r"https?://v.redd.it/\w+/\w+.mp4", submission.media['reddit_video']['fallback_url'])
+	if not groups:
+		return None
+
+	return groups.group(0)
+
+
+# for submission in reddit.subreddit("nextfuckinglevel").top(limit=25):
+# 	video_url = get_video_url(submission)
+# 	if video_url is not None:
+# 		download_video(video_url, output, submission.title)
+
 def tryProcessBatch(downloader):
 	numSuccess = 0
 	linksSkipped = []
@@ -91,7 +111,6 @@ def tryProcessBatch(downloader):
 			log(linkId + " - skipping doujinshi")
 			linksSkipped.append(link.id + " - Skipping doujinshi")
 			continue
-
 
 		try:
 			linkUrl = link.url
@@ -120,6 +139,11 @@ def tryProcessBatch(downloader):
 				downloaded_one, error_one = downloader.downloadUrl(linkUrl, prefix=prefix)
 				downloaded = downloaded and downloaded_one
 				error += str(error_one) if error_one else ""
+		elif videoUrl := get_video_url(link):
+			linkUrl = videoUrl
+			log(linkId + " - video: " + linkUrl)
+			downloaded, error = downloader.downloadVideoUrl(linkUrl)
+			# input("ojaisef")
 		else:
 			log(linkId + " - " + linkUrl)
 			downloaded, error = downloader.downloadUrl(linkUrl)
