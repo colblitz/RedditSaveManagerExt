@@ -2,3 +2,6 @@
 **/config.py
 **/config.pyc
 **/.DS_Store
+users-saved.txt
+output.log
+config.py
